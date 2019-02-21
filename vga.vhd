@@ -4,12 +4,11 @@ use IEEE.numeric_std.all;
 
 entity vga is
 	port(
-		vga_clock				: in std_logic;
-		vga_video_r			: out std_logic_vector(7 downto 0);
-		vga_video_g			: out std_logic_vector(7 downto 0);
-		vga_video_b			: out std_logic_vector(7 downto 0);
+		vga_clock		: in std_logic;
 		vga_hsync		: out std_logic := '1';
-		vga_vsync		: out std_logic := '1'
+		vga_vsync		: out std_logic := '1';
+		vga_hpos			: out integer range 0 to 1000;
+		vga_vpos			: out integer range 0 to 1000
 	);
 end vga;
 
@@ -75,48 +74,8 @@ begin
 		end if;
 	end process;
 
+	vga_hpos <= hPos;
+	vga_vpos <= vPos;
 
-	draw:process(vga_clock, hPos, vPos)
-	begin
-		if(vga_clock'event and vga_clock = '1')then
-				if(hPos < 80)then
-					vga_video_r <= "01111111";
-					vga_video_g <= "01111111";
-					vga_video_b <= "01111111";
-				elsif(hPos < 160)then
-					vga_video_r <= "00000000";
-					vga_video_g <= "00000000";
-					vga_video_b <= "01111111";
-				elsif(hPos < 240)then
-					vga_video_r <= "01111111";
-					vga_video_g <= "00000000";
-					vga_video_b <= "00000000";
-				elsif(hPos < 320)then
-					vga_video_r <= "01111111";
-					vga_video_g <= "00000000";
-					vga_video_b <= "01111111";
-				elsif(hPos < 400)then
-					vga_video_r <= "00000000";
-					vga_video_g <= "01111111";
-					vga_video_b <= "00000000";
-				elsif(hPos < 480)then
-					vga_video_r <= "00000000";
-					vga_video_g <= "01111111";
-					vga_video_b <= "01111111";
-				elsif(hPos < 560)then
-					vga_video_r <= "01111111";
-					vga_video_g <= "01111111";
-					vga_video_b <= "00000000";
-				elsif(hPos < 640)then
-					vga_video_r <= "00000000";
-					vga_video_g <= "00000000";
-					vga_video_b <= "00000000";
-				else
-					vga_video_r <= "00000000";
-					vga_video_g <= "00000000";
-					vga_video_b <= "00000000";
-				end if;
-		end if;
-	end process;
 
 end behavior;
