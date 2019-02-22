@@ -3,3 +3,4 @@ incremental_db
 output_files
 kim1.qws
 .gitignore
+*.bak
