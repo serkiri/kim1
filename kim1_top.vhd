@@ -19,10 +19,12 @@ architecture behavior of kim1_top is
 	signal current_vga_hpos		: integer range 0 to 1000;
 	signal current_vga_vpos		: integer range 0 to 1000;
 	
-	signal segment_draw 			: std_logic := '0';
+	signal segment_draw 			: std_logic_vector(5 downto 0);
 
 	signal oneSecCount 			: integer := 0;
 	signal oneSecond				: std_logic := '0';
+	
+	constant zeros					: std_logic_vector(5 downto 0) := "000000";
 	
 
 begin
@@ -41,13 +43,17 @@ begin
 			vga_vsync => VIDEO_VSYNC
 		);
 
-	segmentInst : entity work.segment
-		port map (
-			segment_hpos => current_vga_hpos,
-			segment_vpos => current_vga_vpos,
-			segment_draw => segment_draw
-		);
-
+	segments : for i in 0 to 5 generate	
+	begin
+		segmentInst : entity work.segment
+			port map (
+				segment_xoffset => 30 + i*100,
+				segment_yoffset => 100,
+				segment_hpos => current_vga_hpos,
+				segment_vpos => current_vga_vpos,
+				segment_draw => segment_draw(i)
+			);
+	end generate;
 	
 	provideOneSecond:process(CLK_20)
 	begin
@@ -63,14 +69,14 @@ begin
 
 	draw_segment : process(segment_draw)
 	begin
-		if(segment_draw = '1' and oneSecond = '1')then
-			VIDEO_R <= "01111111";
-			VIDEO_G <= "00000000";
-			VIDEO_B <= "01111111";
-		else
+		if((segment_draw = zeros) and oneSecond = '1')then
 			VIDEO_R <= "00000000";
 			VIDEO_G <= "00000000";
 			VIDEO_B <= "00000000";
+		else
+			VIDEO_R <= "01111111";
+			VIDEO_G <= "01111111";
+			VIDEO_B <= "01111111";
 		end if;
 	end process;
 		
