@@ -24,39 +24,15 @@ architecture behavior of kim1_top is
 	signal oneSecCount 			: integer := 0;
 	signal oneSecond				: std_logic := '0';
 	
-	component pll is
-        port (
-            inclk0       : in std_logic := '0'; 
-            c0 : out std_logic
-			);
-	end component pll;
-
-	component vga is
-	 	port(
-			vga_clock		: in std_logic;
-			vga_hpos			: out integer range 0 to 1000;
-			vga_vpos			: out integer range 0 to 1000;
-			vga_hsync		: out std_logic := '1';
-			vga_vsync		: out std_logic := '1'
-		);
-	end component vga;
-
-	component segment is
-	 	port(
-			segment_hpos	: in integer range 0 to 1000;
-			segment_vpos	: in integer range 0 to 1000;
-			segment_draw	: out std_logic := '0'
-		);
-	end component segment;
 
 begin
-	pllInst : component pll
+	pllInst : entity work.pll
 		port map (
 			inclk0 => CLK_20,
 			c0 => vga_clk
 		);
 
-	vgaInst : component vga
+	vgaInst : entity work.vga
 		port map (
 			vga_clock => vga_clk,
 			vga_hpos => current_vga_hpos,
@@ -65,7 +41,7 @@ begin
 			vga_vsync => VIDEO_VSYNC
 		);
 
-	segmentInst : component segment
+	segmentInst : entity work.segment
 		port map (
 			segment_hpos => current_vga_hpos,
 			segment_vpos => current_vga_vpos,
@@ -87,10 +63,10 @@ begin
 
 	draw_segment : process(segment_draw)
 	begin
-		if(segment_draw = '1')then
+		if(segment_draw = '1' and oneSecond = '1')then
 			VIDEO_R <= "01111111";
-			VIDEO_G <= "01111111";
-			VIDEO_B <= "00000000";
+			VIDEO_G <= "00000000";
+			VIDEO_B <= "01111111";
 		else
 			VIDEO_R <= "00000000";
 			VIDEO_G <= "00000000";
