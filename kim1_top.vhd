@@ -15,30 +15,30 @@ end kim1_top;
 
 architecture behavior of kim1_top is
 
-	signal vga_clk 				: std_logic := '0';
-	signal current_vga_hpos		: integer range 0 to 1000;
-	signal current_vga_vpos		: integer range 0 to 1000;
+	signal vga_clock 		: std_logic := '0';
+	signal vga_hpos		: integer range 0 to 1000;
+	signal vga_vpos		: integer range 0 to 1000;
 	
-	signal segment_draw 			: std_logic_vector(5 downto 0);
+	signal segment_draw 	: std_logic_vector(5 downto 0);
 
-	signal oneSecCount 			: integer := 0;
-	signal oneSecond				: std_logic := '0';
+	signal oneSecCount 	: integer := 0;
+	signal oneSecond		: std_logic := '0';
 	
-	constant zeros					: std_logic_vector(5 downto 0) := "000000";
-	
+	constant ZEROS			: std_logic_vector(5 downto 0) := "000000";
+		
 
 begin
 	pllInst : entity work.pll
 		port map (
 			inclk0 => CLK_20,
-			c0 => vga_clk
+			c0 => vga_clock
 		);
 
 	vgaInst : entity work.vga
 		port map (
-			vga_clock => vga_clk,
-			vga_hpos => current_vga_hpos,
-			vga_vpos => current_vga_vpos,
+			vga_clock => vga_clock,
+			vga_hpos => vga_hpos,
+			vga_vpos => vga_vpos,
 			vga_hsync => VIDEO_HSYNC,
 			vga_vsync => VIDEO_VSYNC
 		);
@@ -47,11 +47,11 @@ begin
 	begin
 		segmentInst : entity work.segment
 			port map (
-				segment_xoffset => 30 + i*100,
-				segment_yoffset => 100,
-				segment_hpos => current_vga_hpos,
-				segment_vpos => current_vga_vpos,
-				segment_draw => segment_draw(i)
+				xoffset => 30 + i*100,
+				yoffset => 100,
+				hpos => vga_hpos,
+				vpos => vga_vpos,
+				draw => segment_draw(i)
 			);
 	end generate;
 	
@@ -69,14 +69,14 @@ begin
 
 	draw_segment : process(segment_draw)
 	begin
-		if((segment_draw = zeros) and oneSecond = '1')then
-			VIDEO_R <= "00000000";
+		if((segment_draw /= ZEROS) and oneSecond = '1')then
+			VIDEO_R <= "01111111";
 			VIDEO_G <= "00000000";
 			VIDEO_B <= "00000000";
 		else
-			VIDEO_R <= "01111111";
-			VIDEO_G <= "01111111";
-			VIDEO_B <= "01111111";
+			VIDEO_R <= "00000000";
+			VIDEO_G <= "00000000";
+			VIDEO_B <= "00000000";
 		end if;
 	end process;
 		
