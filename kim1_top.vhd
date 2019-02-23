@@ -26,6 +26,12 @@ architecture behavior of kim1_top is
 	
 	constant ZEROS			: std_logic_vector(5 downto 0) := "000000";
 		
+	constant SEG_XOFFSET	: integer := 20;
+	constant SEG_YOFFSET	: integer := 100;
+	constant SEG_WIDTH	: integer := 80;
+	constant SEG_LENGTH	: integer := 160;
+	constant SEG_THICK	: integer := 10;
+	constant SEG_GAP		: integer := 20;
 
 begin
 	pllInst : entity work.pll
@@ -47,8 +53,11 @@ begin
 	begin
 		segmentInst : entity work.segment
 			port map (
-				xoffset => 30 + i*100,
-				yoffset => 100,
+				xoffset 	=> SEG_XOFFSET + i*(SEG_WIDTH + SEG_GAP),
+				yoffset 	=> SEG_YOFFSET,
+				width		=> SEG_WIDTH,
+				length	=>	SEG_LENGTH,
+				thick		=> SEG_THICK,
 				hpos => vga_hpos,
 				vpos => vga_vpos,
 				draw => segment_draw(i)
@@ -69,7 +78,7 @@ begin
 
 	draw_segment : process(segment_draw)
 	begin
-		if((segment_draw /= ZEROS) and oneSecond = '1')then
+		if(segment_draw /= ZEROS)then
 			VIDEO_R <= "01111111";
 			VIDEO_G <= "00000000";
 			VIDEO_B <= "00000000";
