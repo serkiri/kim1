@@ -52,10 +52,11 @@ architecture behavior of kim1_top is
 	signal nmi				: std_logic := '1';
 	signal irq				: std_logic := '1';
 	
-	signal data_in       : std_logic_vector(7 downto 0);
-   signal data_out      : std_logic_vector(7 downto 0);
-   signal rom_data_out  : std_logic_vector(7 downto 0);
-	signal address_out	: std_logic_vector(15 downto 0);
+	signal data_in       	: std_logic_vector(7 downto 0);
+   signal data_out      	: std_logic_vector(7 downto 0);
+   signal rom_data_out  	: std_logic_vector(7 downto 0);
+   signal ram1024_data_out	: std_logic_vector(7 downto 0);
+	signal address_out		: std_logic_vector(15 downto 0);
 
 	signal ram_1024_en	: std_logic;
 	signal io_6530_003_en: std_logic;
@@ -86,6 +87,14 @@ begin
 			clock		=> not(phi4),
 			q			=>	rom_data_out
 		);
+
+	ram1024Inst : entity work.ram1024 port map (
+		address	=> address_out(9 downto 0),
+		clock	 	=> ((not(phi4) and (not(we))) or (not(phi4) and we and not(phi2))) and ram_1024_en,
+		data	 	=> data_out,
+		wren	 	=> we,
+		q	 		=> ram1024_data_out
+	);
 
 	vgaInst : entity work.vga
 		port map (
@@ -129,10 +138,28 @@ begin
             nres        => '0'     
         );
 		  
-	romDataBus:process(rom_en, rom_data_out)
+	dataBusMux:process(rom_en, ram_1024_en, rom_data_out, ram1024_data_out)
 	begin
 		if (rom_en = '1') then
 			data_in <= rom_data_out;
+--			case address_out is
+--				when x"FFFC" => data_in <= x"22";
+--				when x"FFFD" => data_in <= x"1C";
+--				when x"FFFE" => data_in <= x"78";
+--				when x"FFFF" => data_in <= x"56";
+--				when x"1C22" => data_in <= x"A2";--ldx 60
+--				when x"1C23" => data_in <= x"60";
+--				when x"1C24" => data_in <= x"86";--stx 00f2
+--				when x"1C25" => data_in <= x"F2";
+--				when x"1C26" => data_in <= x"20";--jsr 00f2
+--				when x"1C27" => data_in <= x"F2";
+--				when x"1C28" => data_in <= x"00";
+--				
+--				when others  => data_in <= x"EA";
+--			end case;
+		elsif (ram_1024_en = '1') then
+			data_in <= ram1024_data_out;
+
 		end if;
 	end process;
 	
@@ -289,25 +316,7 @@ begin
 			"1110001" when x"f";
 	end generate;
 
---	rom : process(address_out)
---	begin
---		case address_out is
---			when x"FFFC" => data_in <= x"22";
---			when x"FFFD" => data_in <= x"1C";
---			when x"FFFE" => data_in <= x"78";
---			when x"FFFF" => data_in <= x"56";
---			when x"1C22" => data_in <= x"A2";
---			when x"1C23" => data_in <= x"FF";
---			when x"1C24" => data_in <= x"9A";
---			when x"1C25" => data_in <= x"86";
---			when x"1C26" => data_in <= x"F2";
---			when x"1C27" => data_in <= x"20";
---			when x"1C28" => data_in <= x"88";
---			when x"1C29" => data_in <= x"1E";
---			
---			when others  => data_in <= x"EA";
---		end case;
---	end process;
+
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
@@ -315,11 +324,9 @@ begin
 	
 	ledSegmentsDebug(8)(0) <= phi2;
 	ledSegmentsDebug(8)(1) <= rst;
+	ledSegmentsDebug(8)(2) <= ((not(phi4) and (not(we))) or (not(phi4) and we and not(phi2))) and ram_1024_en;
 
-	ledSegmentsDebug(8)(2) <= ram_1024_en;
-	ledSegmentsDebug(8)(3) <= io_6530_003_en or io_6530_002_en;
-	ledSegmentsDebug(8)(4) <= ram_6530_en;
-	ledSegmentsDebug(8)(5) <= rom_en;
+	ledSegmentsDebug(8)(3) <= not(phi4);
 
 	ledSegmentsDebug(8)(6) <= we;
 	

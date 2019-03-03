@@ -93,4 +93,5 @@ set_global_assignment -name VHDL_FILE kim1_top.vhd
 set_global_assignment -name QIP_FILE pll.qip
 set_global_assignment -name QIP_FILE rom.qip
 set_global_assignment -name VHDL_FILE mem_decoder.vhd
+set_global_assignment -name QIP_FILE ram1024.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
