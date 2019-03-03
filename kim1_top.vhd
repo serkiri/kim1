@@ -32,7 +32,8 @@ architecture behavior of kim1_top is
 
 	
 	signal oneSecCount	 	: integer := 0;
-	signal oneSecond			: std_logic := '0';
+	signal phi4					: std_logic := '0';
+	signal phi2					: std_logic := '0';
 	signal signalCount		: integer := 0;
 
 	
@@ -53,14 +54,37 @@ architecture behavior of kim1_top is
 	
 	signal data_in       : std_logic_vector(7 downto 0);
    signal data_out      : std_logic_vector(7 downto 0);
+   signal rom_data_out  : std_logic_vector(7 downto 0);
 	signal address_out	: std_logic_vector(15 downto 0);
 
+	signal ram_1024_en	: std_logic;
+	signal io_6530_003_en: std_logic;
+	signal io_6530_002_en: std_logic;
+	signal ram_6530_en	: std_logic;
+	signal rom_en			: std_logic;
 
 begin
 	pllInst : entity work.pll
 		port map (
 			inclk0 => CLK_20,
 			c0 => vga_clock
+		);
+
+	mem_decoder_inst : entity work.mem_decoder
+		port map(
+			addr 				=> address_out,
+			ram_1024_en 	=> ram_1024_en,
+			io_6530_003_en => io_6530_003_en,
+			io_6530_002_en => io_6530_002_en,
+			ram_6530_en		=> ram_6530_en,
+			rom_en			=> rom_en
+		);
+		
+	romInst : entity work.rom
+		port map (
+			address	=> address_out(10 downto 0),
+			clock		=> not(phi4),
+			q			=>	rom_data_out
 		);
 
 	vgaInst : entity work.vga
@@ -93,7 +117,7 @@ begin
             PC_INIT => x"0000"
         )
         port map (
-            clk         => oneSecond,
+            clk         => phi2,
             rst         => rst,
             we          => we,
             data_in     => data_in,
@@ -104,32 +128,42 @@ begin
             ready       => '1',
             nres        => '0'     
         );
+		  
+	romDataBus:process(rom_en, rom_data_out)
+	begin
+		if (rom_en = '1') then
+			data_in <= rom_data_out;
+		end if;
+	end process;
 	
-	provideOneSecond:process(CLK_20)
+	provideMemClock:process(CLK_20)
 	begin
 		if(CLK_20'event and CLK_20 = '1')then
-			if (oneSecCount >= 40000000) then
+			if (oneSecCount >= 20000000) then
 					oneSecCount <= 0;
-					oneSecond <= not(oneSecond);
-					--if (rst = '0') then
-						ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
-					--end if;
+					phi4 <= not(phi4);
+					ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
 			else
 				oneSecCount <= oneSecCount + 1;
 			end if;
 		end if;
 	end process;
 
-	signalCountProcess:process(oneSecond)
+	provideCpuClock:process(phi4)
 	begin
-		if(oneSecond'event and oneSecond = '1')then
-			if (signalCount >= 5) then
+		if(phi4'event and phi4 = '1')then
+			phi2 <= not(phi2);
+		end if;
+	end process;
+
+	signalCountProcess:process(phi2)
+	begin
+		if(phi2'event and phi2 = '1')then
+			if (signalCount >= 2) then
 					rst <= '0';
+			else
+				signalCount <= signalCount + 1;
 			end if;
-			if (signalCount >= 50) then
-					irq <= '0';
-			end if;
-			signalCount <= signalCount + 1;
 		end if;
 	end process;
 
@@ -255,36 +289,37 @@ begin
 			"1110001" when x"f";
 	end generate;
 
-	rom : process(address_out)
-	begin
-		case address_out is
-			when x"FFFC" => data_in <= x"34";
-			when x"FFFD" => data_in <= x"12";
-			when x"FFFE" => data_in <= x"78";
-			when x"FFFF" => data_in <= x"56";
---			78 sei (1) - disable
---			58 cli (0) - enable
---			40 rti
-			
-			when x"1234" => data_in <= x"78";
-			when x"1240" => data_in <= x"4C";
-			when x"1241" => data_in <= x"34";
-			when x"1242" => data_in <= x"12";
-			
-			when x"567B" => data_in <= x"40";
-			
-			when others  => data_in <= x"EA";
-		end case;
-	end process;
+--	rom : process(address_out)
+--	begin
+--		case address_out is
+--			when x"FFFC" => data_in <= x"22";
+--			when x"FFFD" => data_in <= x"1C";
+--			when x"FFFE" => data_in <= x"78";
+--			when x"FFFF" => data_in <= x"56";
+--			when x"1C22" => data_in <= x"A2";
+--			when x"1C23" => data_in <= x"FF";
+--			when x"1C24" => data_in <= x"9A";
+--			when x"1C25" => data_in <= x"86";
+--			when x"1C26" => data_in <= x"F2";
+--			when x"1C27" => data_in <= x"20";
+--			when x"1C28" => data_in <= x"88";
+--			when x"1C29" => data_in <= x"1E";
+--			
+--			when others  => data_in <= x"EA";
+--		end case;
+--	end process;
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
 	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
 	
-	ledSegmentsDebug(8)(0) <= oneSecond;
+	ledSegmentsDebug(8)(0) <= phi2;
 	ledSegmentsDebug(8)(1) <= rst;
-	ledSegmentsDebug(8)(2) <= nmi;
-	ledSegmentsDebug(8)(3) <= irq;
+
+	ledSegmentsDebug(8)(2) <= ram_1024_en;
+	ledSegmentsDebug(8)(3) <= io_6530_003_en or io_6530_002_en;
+	ledSegmentsDebug(8)(4) <= ram_6530_en;
+	ledSegmentsDebug(8)(5) <= rom_en;
 
 	ledSegmentsDebug(8)(6) <= we;
 	
