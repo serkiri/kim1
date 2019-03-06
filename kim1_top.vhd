@@ -13,6 +13,7 @@ entity kim1_top is
 		data_in_debug       	: out std_logic_vector(7 downto 0);
 		data_out_debug      	: out std_logic_vector(7 downto 0);
 		address_out_debug		: out std_logic_vector(15 downto 0);
+		mem_clock_debug : out std_logic;
 
 		ram_1024_en_debug		: out std_logic;
 		io_6530_003_en_debug	: out std_logic;
@@ -361,7 +362,8 @@ begin
 		io_6530_003_en_debug	<= io_6530_003_en;
 		io_6530_002_en_debug	<= io_6530_002_en;
 		ram_6530_en_debug		<= ram_6530_en;
-		rom_en_debug			<= not(phi4) and not(phi2) and ram_1024_en;
+		rom_en_debug			<= rom_en;
+		mem_clock_debug		<= mem_clock;
 	
 	
 end behavior;

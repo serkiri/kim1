@@ -124,6 +124,7 @@ set_location_assignment PIN_112 -to address_out_debug[12]
 set_location_assignment PIN_113 -to address_out_debug[13]
 set_location_assignment PIN_114 -to address_out_debug[14]
 set_location_assignment PIN_115 -to address_out_debug[15]
+set_location_assignment PIN_128 -to mem_clock_debug
 			
 
 set_global_assignment -name VHDL_FILE 6530.vhd
