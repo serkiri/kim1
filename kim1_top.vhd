@@ -34,6 +34,7 @@ architecture behavior of kim1_top is
 	signal oneSecCount	 	: integer := 0;
 	signal phi4					: std_logic := '0';
 	signal phi2					: std_logic := '0';
+	signal mem_clock			: std_logic :='0';
 	signal signalCount		: integer := 0;
 
 	
@@ -84,13 +85,13 @@ begin
 	romInst : entity work.rom
 		port map (
 			address	=> address_out(10 downto 0),
-			clock		=> not(phi4),
+			clock		=> mem_clock and rom_en,
 			q			=>	rom_data_out
 		);
 
 	ram1024Inst : entity work.ram1024 port map (
 		address	=> address_out(9 downto 0),
-		clock	 	=> ((not(phi4) and (not(we))) or (not(phi4) and we and not(phi2))) and ram_1024_en,
+		clock	 	=> mem_clock and ram_1024_en,
 		data	 	=> data_out,
 		wren	 	=> we,
 		q	 		=> ram1024_data_out
@@ -317,6 +318,7 @@ begin
 	end generate;
 
 
+	mem_clock <= not(phi4) and not(phi2);
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
@@ -324,7 +326,6 @@ begin
 	
 	ledSegmentsDebug(8)(0) <= phi2;
 	ledSegmentsDebug(8)(1) <= rst;
-	ledSegmentsDebug(8)(2) <= ((not(phi4) and (not(we))) or (not(phi4) and we and not(phi2))) and ram_1024_en;
 
 	ledSegmentsDebug(8)(3) <= not(phi4);
 

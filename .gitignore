@@ -5,3 +5,5 @@ kim1.qws
 .gitignore
 *.bak
 greybox_tmp
+simulation
+*.temp
