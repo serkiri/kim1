@@ -5,6 +5,22 @@ use IEEE.numeric_std.all;
 entity kim1_top is
 	port(
 		CLK_20			: in std_logic;
+		
+		phi4_debug		: out std_logic;
+		phi2_debug		: out std_logic;
+		rst_debug		: out std_logic;
+		we_debug			: out std_logic;
+		data_in_debug       	: out std_logic_vector(7 downto 0);
+		data_out_debug      	: out std_logic_vector(7 downto 0);
+		address_out_debug		: out std_logic_vector(15 downto 0);
+
+		ram_1024_en_debug		: out std_logic;
+		io_6530_003_en_debug	: out std_logic;
+		io_6530_002_en_debug	: out std_logic;
+		ram_6530_en_debug		: out std_logic;
+		rom_en_debug			: out std_logic;
+		
+		
 		VIDEO_R			: out std_logic_vector(7 downto 0);
 		VIDEO_G			: out std_logic_vector(7 downto 0);
 		VIDEO_B			: out std_logic_vector(7 downto 0);
@@ -166,7 +182,7 @@ begin
 	provideMemClock:process(CLK_20)
 	begin
 		if(CLK_20'event and CLK_20 = '1')then
-			if (oneSecCount >= 20000000) then
+			if (oneSecCount >= 1) then
 					oneSecCount <= 0;
 					phi4 <= not(phi4);
 					ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
@@ -329,6 +345,23 @@ begin
 	ledSegmentsDebug(8)(3) <= not(phi4);
 
 	ledSegmentsDebug(8)(6) <= we;
+	
+	phi4_debug <= phi4;
+	
+		phi2_debug <= phi2;
+		rst_debug <= rst;
+		we_debug <= we;
+		data_in_debug <= data_in;
+		data_out_debug <= data_out;
+		address_out_debug <= address_out;
+
+
+		ram_1024_en_debug	 <= ram_1024_en;
+		io_6530_003_en_debug	<= io_6530_003_en;
+		io_6530_002_en_debug	<= io_6530_002_en;
+		ram_6530_en_debug		<= ram_6530_en;
+		rom_en_debug			<= not(phi4) and not(phi2) and ram_1024_en;
+	
 	
 end behavior;
 	
