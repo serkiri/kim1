@@ -74,6 +74,7 @@ architecture behavior of kim1_top is
    signal data_out      	: std_logic_vector(7 downto 0);
    signal rom_data_out  	: std_logic_vector(7 downto 0);
    signal ram1024_data_out	: std_logic_vector(7 downto 0);
+   signal ram6530_data_out	: std_logic_vector(7 downto 0);
 	signal address_out		: std_logic_vector(15 downto 0);
 
 	signal ram_1024_en	: std_logic;
@@ -112,6 +113,14 @@ begin
 		data	 	=> data_out,
 		wren	 	=> we,
 		q	 		=> ram1024_data_out
+	);
+
+	ram6530Inst : entity work.ram6530 port map (
+		address	=> address_out(6 downto 0),
+		clock	 	=> mem_clock and ram_6530_en,
+		data	 	=> data_out,
+		wren	 	=> we,
+		q	 		=> ram6530_data_out
 	);
 
 	vgaInst : entity work.vga
@@ -177,7 +186,8 @@ begin
 --			end case;
 		elsif (ram_1024_en = '1') then
 			data_in <= ram1024_data_out;
-
+		elsif (ram_6530_en = '1') then
+			data_in <= ram6530_data_out;
 		end if;
 	end process;
 	
