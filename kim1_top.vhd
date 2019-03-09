@@ -53,12 +53,14 @@ architecture behavior of kim1_top is
 	signal nmi				: std_logic := '1';
 	signal irq				: std_logic := '1';
 	
-	signal data_in       	: std_logic_vector(7 downto 0);
-   signal data_out      	: std_logic_vector(7 downto 0);
-   signal rom_data_out  	: std_logic_vector(7 downto 0);
-   signal ram1024_data_out	: std_logic_vector(7 downto 0);
-   signal ram6530_data_out	: std_logic_vector(7 downto 0);
-	signal address_out		: std_logic_vector(15 downto 0);
+	signal data_in       		: std_logic_vector(7 downto 0);
+   signal data_out      		: std_logic_vector(7 downto 0);
+   signal rom_data_out  		: std_logic_vector(7 downto 0);
+   signal ram1024_data_out		: std_logic_vector(7 downto 0);
+   signal ram6530_data_out		: std_logic_vector(7 downto 0);
+   signal io6530_002_data_out	: std_logic_vector(7 downto 0);	
+   signal io6530_003_data_out	: std_logic_vector(7 downto 0);	
+	signal address_out			: std_logic_vector(15 downto 0);
 
 	signal ram_1024_en	: std_logic;
 	signal io_6530_003_en: std_logic;
@@ -66,7 +68,14 @@ architecture behavior of kim1_top is
 	signal ram_6530_en	: std_logic;
 	signal rom_en			: std_logic;
 	
-	signal io_6530_002_porta_out : std_logic_vector(7 downto 0);
+	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
+	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0);
+	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0);
+	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0);
+	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0);
 
 begin
 	pllInst : entity work.pll
@@ -115,9 +124,25 @@ begin
 		rw_n		=> not(we),
 		add		=> address_out(3 downto 0),
 		din		=> data_out,
-		pa_in		=> "00000000",
-		pb_in		=> "00000000",
-		pa_out	=> io_6530_002_porta_out
+		dout		=> io6530_002_data_out,
+		pa_in		=> io_6530_002_porta_in,
+		pb_in		=> io_6530_002_portb_in,
+		pa_out	=> io_6530_002_porta_out,
+		pb_out	=> io_6530_002_portb_out
+	);
+
+	io6530_003Inst : entity work.R6530 port map (
+		phi2		=> phi2,
+		rst_n		=> not(rst),
+		cs			=> io_6530_003_en,
+		rw_n		=> not(we),
+		add		=> address_out(3 downto 0),
+		din		=> data_out,
+		dout		=> io6530_003_data_out,
+		pa_in		=> io_6530_003_porta_in,
+		pb_in		=> io_6530_003_portb_in,
+		pa_out	=> io_6530_003_porta_out,
+		pb_out	=> io_6530_003_portb_out
 	);
 
 	vgaInst : entity work.vga
@@ -185,16 +210,20 @@ begin
 			data_in <= ram1024_data_out;
 		elsif (ram_6530_en = '1') then
 			data_in <= ram6530_data_out;
+		elsif (io_6530_002_en = '1') then
+			data_in <= io6530_002_data_out;
+		elsif (io_6530_003_en = '1') then
+			data_in <= io6530_003_data_out;
 		end if;
 	end process;
 	
 	provideMemClock:process(CLK_20)
 	begin
 		if(CLK_20'event and CLK_20 = '1')then
-			if (oneSecCount >= 20000000) then
+			if (oneSecCount >= 20000) then
 					oneSecCount <= 0;
 					phi4 <= not(phi4);
-					ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
+--					ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
 			else
 				oneSecCount <= oneSecCount + 1;
 			end if;
@@ -354,6 +383,11 @@ begin
 	ledSegmentsDebug(8)(3) <= not(phi4);
 
 	ledSegmentsDebug(8)(6) <= we;
+	
+	ledValue(7 downto 0) <= io_6530_002_porta_out;
+	ledValue(15 downto 8) <= io_6530_002_portb_out;
+	ledValue(23 downto 16) <= x"AA";
+	
 	
 end behavior;
 	
