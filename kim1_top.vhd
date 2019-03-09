@@ -65,6 +65,8 @@ architecture behavior of kim1_top is
 	signal io_6530_002_en: std_logic;
 	signal ram_6530_en	: std_logic;
 	signal rom_en			: std_logic;
+	
+	signal io_6530_002_porta_out : std_logic_vector(7 downto 0);
 
 begin
 	pllInst : entity work.pll
@@ -104,6 +106,18 @@ begin
 		data	 	=> data_out,
 		wren	 	=> we,
 		q	 		=> ram6530_data_out
+	);
+
+	io6530_002Inst : entity work.R6530 port map (
+		phi2		=> phi2,
+		rst_n		=> not(rst),
+		cs			=> io_6530_002_en,
+		rw_n		=> not(we),
+		add		=> address_out(3 downto 0),
+		din		=> data_out,
+		pa_in		=> "00000000",
+		pb_in		=> "00000000",
+		pa_out	=> io_6530_002_porta_out
 	);
 
 	vgaInst : entity work.vga
