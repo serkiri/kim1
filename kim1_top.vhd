@@ -51,7 +51,7 @@ architecture behavior of kim1_top is
 	constant SEG_GAP		: integer := 20;
 	
 	constant AFTER_BURN_CYCLES		: integer := 8000;
-	constant CLOCK_DEVIDER			: integer := 2000;
+	constant CLOCK_DEVIDER			: integer := 5000000*2;
 	
 	
 	signal we				: std_logic;
@@ -75,13 +75,13 @@ architecture behavior of kim1_top is
 	signal rom_en			: std_logic;
 	
 	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0);
+	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0);
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"ff";
 	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0);
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"ff";
 	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0);
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"ff";
 
 begin
 	pllInst : entity work.pll
@@ -234,9 +234,17 @@ begin
 		if(phi2'event and phi2 = '1')then
 			if (signalCount >= 2) then
 					rst <= '0';
-			else
-				signalCount <= signalCount + 1;
 			end if;
+			if (signalCount >= 10000000) and (signalCount < 10000000 + 300000)then
+				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
+				--	io_6530_002_porta_in(1) <= '1'; 
+					ledSegmentsDebug(8)(1) <= '1';
+				else
+				--	io_6530_002_porta_in(1) <= '0';
+					ledSegmentsDebug(8)(1) <= '0';					
+				end if;
+			end if;
+			signalCount <= signalCount + 1;
 		end if;
 	end process;
 
@@ -366,14 +374,13 @@ begin
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
-	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
+--	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
 	
-	ledSegmentsDebug(8)(0) <= phi2;
-	ledSegmentsDebug(8)(1) <= rst;
+	ledValueDebug(7 downto 0) <= io_6530_002_portb_out;
+	
+--	ledSegmentsDebug(8)(0) <= not(io_6530_002_porta_in(1));
 
-	ledSegmentsDebug(8)(3) <= not(phi4);
-
-	ledSegmentsDebug(8)(6) <= we;
+	io_6530_002_porta_in <= x"0f";
 	
 end behavior;
 	
