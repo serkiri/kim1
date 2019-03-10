@@ -51,7 +51,7 @@ architecture behavior of kim1_top is
 	constant SEG_GAP		: integer := 20;
 	
 	constant AFTER_BURN_CYCLES		: integer := 8000;
-	constant CLOCK_DEVIDER			: integer := 20000;
+	constant CLOCK_DEVIDER			: integer := 2000;
 	
 	
 	signal we				: std_logic;
