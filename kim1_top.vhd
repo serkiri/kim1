@@ -23,7 +23,7 @@ architecture behavior of kim1_top is
 	
 	type LedArray is array (0 to 5) of std_logic_vector(6 downto 0);
 	signal ledSegments	: LedArray;
-	signal ledValue		: std_logic_vector (23 downto 0) := x"000000";
+--	signal ledValue		: std_logic_vector (23 downto 0) := x"000000";
 
 	type LedArrayDebug is array (0 to 8) of std_logic_vector(6 downto 0);
 	signal ledSegmentsDebug	: LedArrayDebug;
@@ -187,7 +187,7 @@ begin
             nres        => '0'     
         );
 		  
-	dataBusMux:process(rom_en, ram_1024_en, rom_data_out, ram1024_data_out)
+	dataBusMux:process(rom_en, ram_1024_en, ram_6530_en, io_6530_002_en, io_6530_003_en, ram1024_data_out, ram6530_data_out, io6530_002_data_out, io6530_003_data_out)
 	begin
 		if (rom_en = '1') then
 			data_in <= rom_data_out;
@@ -214,6 +214,8 @@ begin
 			data_in <= io6530_002_data_out;
 		elsif (io_6530_003_en = '1') then
 			data_in <= io6530_003_data_out;
+		else
+			data_in <= "ZZZZZZZZ";
 		end if;
 	end process;
 	
@@ -266,27 +268,82 @@ begin
 	end process;
 		
 
-	generateLedValues : for i in 0 to 5 generate	
+--	generateLedValues : for i in 0 to 5 generate	
+--	begin
+--		with ledValue((5-i)*4 + 3 downto (5-i)*4) select ledSegments(i) <=
+--			"0111111" when x"0",
+--			"0000110" when x"1",
+--			"1011011" when x"2",
+--			"1001111" when x"3",
+--			"1100110" when x"4",
+--			"1101101" when x"5",
+--			"1111101" when x"6",
+--			"0000111" when x"7",
+--			"1111111" when x"8",
+--			"1101111" when x"9",
+--			"1110111" when x"a",
+--			"1111100" when x"b",
+--			"0111001" when x"c",
+--			"1011110" when x"d",
+--			"1111001" when x"e",
+--			"1110001" when x"f";
+--	end generate;
+
+
+	processIndicators : process(io_6530_002_portb_out, io_6530_002_porta_out)
 	begin
-		with ledValue((5-i)*4 + 3 downto (5-i)*4) select ledSegments(i) <=
-			"0111111" when x"0",
-			"0000110" when x"1",
-			"1011011" when x"2",
-			"1001111" when x"3",
-			"1100110" when x"4",
-			"1101101" when x"5",
-			"1111101" when x"6",
-			"0000111" when x"7",
-			"1111111" when x"8",
-			"1101111" when x"9",
-			"1110111" when x"a",
-			"1111100" when x"b",
-			"0111001" when x"c",
-			"1011110" when x"d",
-			"1111001" when x"e",
-			"1110001" when x"f";
-	end generate;
-	
+		if (io_6530_002_portb_out(4 downto 1) = x"4") then 
+			ledSegments(5) <= io_6530_002_porta_out(6 downto 0);
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= "0000000"; 
+		elsif (io_6530_002_portb_out(4 downto 1) = x"5") then 
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= io_6530_002_porta_out(6 downto 0); 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= "0000000"; 
+		elsif (io_6530_002_portb_out(4 downto 1) = x"6") then 
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= io_6530_002_porta_out(6 downto 0); 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= "0000000"; 
+		elsif (io_6530_002_portb_out(4 downto 1) = x"7") then 
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= io_6530_002_porta_out(6 downto 0); 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= "0000000"; 
+		elsif (io_6530_002_portb_out(4 downto 1) = x"8") then 
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= io_6530_002_porta_out(6 downto 0); 
+			ledSegments(0) <= "0000000"; 
+		elsif (io_6530_002_portb_out(4 downto 1) = x"9") then 
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= io_6530_002_porta_out(6 downto 0); 
+		else
+			ledSegments(5) <= "0000000";
+			ledSegments(4) <= "0000000"; 
+			ledSegments(3) <= "0000000"; 
+			ledSegments(2) <= "0000000"; 
+			ledSegments(1) <= "0000000"; 
+			ledSegments(0) <= "0000000"; 
+		end if;
+	end process;
+		
 	generateDebugAddr : for i in 0 to 3 generate	
 	begin
 		segmentInst : entity work.segment
@@ -384,9 +441,9 @@ begin
 
 	ledSegmentsDebug(8)(6) <= we;
 	
-	ledValue(7 downto 0) <= io_6530_002_porta_out;
-	ledValue(15 downto 8) <= io_6530_002_portb_out;
-	ledValue(23 downto 16) <= x"AA";
+--	ledValue(7 downto 0) <= io_6530_002_porta_out;
+--	ledValue(15 downto 8) <= io_6530_002_portb_out;
+--	ledValue(23 downto 16) <= x"AA";
 	
 	
 end behavior;
