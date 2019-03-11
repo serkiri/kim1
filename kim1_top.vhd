@@ -41,7 +41,9 @@ architecture behavior of kim1_top is
 	
 	type LedArray is array (0 to 5) of std_logic_vector(6 downto 0);
 	signal ledSegments	: LedArray;
-	signal ledValue		: std_logic_vector (23 downto 0) := x"000000";
+	signal ledSegmentsAfterBurn	: LedArray;
+	type LedDelaysType is array (0 to 5) of integer;
+	signal ledDelays : LedDelaysType := (others => 0);
 
 	type LedArrayDebug is array (0 to 8) of std_logic_vector(6 downto 0);
 	signal ledSegmentsDebug	: LedArrayDebug;
@@ -66,17 +68,23 @@ architecture behavior of kim1_top is
 	constant SEG_THICK	: integer := 10;
 	constant SEG_GAP		: integer := 20;
 	
+	constant AFTER_BURN_CYCLES		: integer := 8000;
+	constant CLOCK_DEVIDER			: integer := 5000000*2;
+	
+	
 	signal we				: std_logic;
 	signal rst				: std_logic := '1';
 	signal nmi				: std_logic := '1';
 	signal irq				: std_logic := '1';
 	
-	signal data_in       	: std_logic_vector(7 downto 0);
-   signal data_out      	: std_logic_vector(7 downto 0);
-   signal rom_data_out  	: std_logic_vector(7 downto 0);
-   signal ram1024_data_out	: std_logic_vector(7 downto 0);
-   signal ram6530_data_out	: std_logic_vector(7 downto 0);
-	signal address_out		: std_logic_vector(15 downto 0);
+	signal data_in       		: std_logic_vector(7 downto 0);
+   signal data_out      		: std_logic_vector(7 downto 0);
+   signal rom_data_out  		: std_logic_vector(7 downto 0);
+   signal ram1024_data_out		: std_logic_vector(7 downto 0);
+   signal ram6530_data_out		: std_logic_vector(7 downto 0);
+   signal io6530_002_data_out	: std_logic_vector(7 downto 0);	
+   signal io6530_003_data_out	: std_logic_vector(7 downto 0);	
+	signal address_out			: std_logic_vector(15 downto 0);
 
 	signal ram_1024_en	: std_logic;
 	signal io_6530_003_en: std_logic;
@@ -84,7 +92,14 @@ architecture behavior of kim1_top is
 	signal ram_6530_en	: std_logic;
 	signal rom_en			: std_logic;
 	
-	signal io_6530_002_porta_out : std_logic_vector(7 downto 0);
+	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
+	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"00";
+	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"ff";
 
 begin
 	pllInst : entity work.pll
@@ -133,9 +148,25 @@ begin
 		rw_n		=> not(we),
 		add		=> address_out(3 downto 0),
 		din		=> data_out,
-		pa_in		=> "00000000",
-		pb_in		=> "00000000",
-		pa_out	=> io_6530_002_porta_out
+		dout		=> io6530_002_data_out,
+		pa_in		=> io_6530_002_porta_in,
+		pb_in		=> io_6530_002_portb_in,
+		pa_out	=> io_6530_002_porta_out,
+		pb_out	=> io_6530_002_portb_out
+	);
+
+	io6530_003Inst : entity work.R6530 port map (
+		phi2		=> phi2,
+		rst_n		=> not(rst),
+		cs			=> io_6530_003_en,
+		rw_n		=> not(we),
+		add		=> address_out(3 downto 0),
+		din		=> data_out,
+		dout		=> io6530_003_data_out,
+		pa_in		=> io_6530_003_porta_in,
+		pb_in		=> io_6530_003_portb_in,
+		pa_out	=> io_6530_003_porta_out,
+		pb_out	=> io_6530_003_portb_out
 	);
 
 	vgaInst : entity work.vga
@@ -180,39 +211,29 @@ begin
             nres        => '0'     
         );
 		  
-	dataBusMux:process(rom_en, ram_1024_en, rom_data_out, ram1024_data_out)
+	dataBusMux:process(rom_en, ram_1024_en, ram_6530_en, io_6530_002_en, io_6530_003_en, ram1024_data_out, ram6530_data_out, io6530_002_data_out, io6530_003_data_out)
 	begin
 		if (rom_en = '1') then
 			data_in <= rom_data_out;
---			case address_out is
---				when x"FFFC" => data_in <= x"22";
---				when x"FFFD" => data_in <= x"1C";
---				when x"FFFE" => data_in <= x"78";
---				when x"FFFF" => data_in <= x"56";
---				when x"1C22" => data_in <= x"A2";--ldx 60
---				when x"1C23" => data_in <= x"60";
---				when x"1C24" => data_in <= x"86";--stx 00f2
---				when x"1C25" => data_in <= x"F2";
---				when x"1C26" => data_in <= x"20";--jsr 00f2
---				when x"1C27" => data_in <= x"F2";
---				when x"1C28" => data_in <= x"00";
---				
---				when others  => data_in <= x"EA";
---			end case;
 		elsif (ram_1024_en = '1') then
 			data_in <= ram1024_data_out;
 		elsif (ram_6530_en = '1') then
 			data_in <= ram6530_data_out;
+		elsif (io_6530_002_en = '1') then
+			data_in <= io6530_002_data_out;
+		elsif (io_6530_003_en = '1') then
+			data_in <= io6530_003_data_out;
+		else
+			data_in <= "ZZZZZZZZ";
 		end if;
 	end process;
 	
 	provideMemClock:process(CLK_20)
 	begin
 		if(CLK_20'event and CLK_20 = '1')then
-			if (oneSecCount >= 1) then
+			if (oneSecCount >= CLOCK_DEVIDER) then
 					oneSecCount <= 0;
 					phi4 <= not(phi4);
-					ledValue <= std_logic_vector( unsigned(ledValue) + 1 );
 			else
 				oneSecCount <= oneSecCount + 1;
 			end if;
@@ -231,9 +252,17 @@ begin
 		if(phi2'event and phi2 = '1')then
 			if (signalCount >= 2) then
 					rst <= '0';
-			else
-				signalCount <= signalCount + 1;
 			end if;
+			if (signalCount >= 10000000) and (signalCount < 10000000 + 300000)then
+				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
+				--	io_6530_002_porta_in(1) <= '1'; 
+					ledSegmentsDebug(8)(1) <= '1';
+				else
+				--	io_6530_002_porta_in(1) <= '0';
+					ledSegmentsDebug(8)(1) <= '0';					
+				end if;
+			end if;
+			signalCount <= signalCount + 1;
 		end if;
 	end process;
 
@@ -254,28 +283,27 @@ begin
 		end if;
 	end process;
 		
-
-	generateLedValues : for i in 0 to 5 generate	
+	processIndicators : process(phi2, io_6530_002_portb_out, io_6530_002_porta_out)
 	begin
-		with ledValue((5-i)*4 + 3 downto (5-i)*4) select ledSegments(i) <=
-			"0111111" when x"0",
-			"0000110" when x"1",
-			"1011011" when x"2",
-			"1001111" when x"3",
-			"1100110" when x"4",
-			"1101101" when x"5",
-			"1111101" when x"6",
-			"0000111" when x"7",
-			"1111111" when x"8",
-			"1101111" when x"9",
-			"1110111" when x"a",
-			"1111100" when x"b",
-			"0111001" when x"c",
-			"1011110" when x"d",
-			"1111001" when x"e",
-			"1110001" when x"f";
-	end generate;
-	
+		if(phi2'event and phi2 = '1')then
+			for i in 0 to 5 loop	
+				if (to_integer(unsigned(io_6530_002_portb_out(4 downto 1))) = 4 + i) then
+					ledDelays(i) <= 0;
+					ledSegments(i) <= ledSegmentsAfterBurn(i);
+					ledSegmentsAfterBurn(i) <= ledSegmentsAfterBurn(i) or io_6530_002_porta_out(6 downto 0);
+				else
+					if (ledDelays(i) = AFTER_BURN_CYCLES) then
+						ledSegments(i) <= "0000000";
+						ledSegmentsAfterBurn(i) <= "0000000";
+					else
+						ledDelays(i) <= ledDelays(i) + 1;
+						ledSegments(i) <= ledSegmentsAfterBurn(i);
+					end if;
+				end if;
+			end loop;
+		end if;
+	end process;
+		
 	generateDebugAddr : for i in 0 to 3 generate	
 	begin
 		segmentInst : entity work.segment
@@ -364,14 +392,13 @@ begin
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
-	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
+--	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
 	
-	ledSegmentsDebug(8)(0) <= phi2;
-	ledSegmentsDebug(8)(1) <= rst;
+	ledValueDebug(7 downto 0) <= io_6530_002_portb_out;
+	
+--	ledSegmentsDebug(8)(0) <= not(io_6530_002_porta_in(1));
 
-	ledSegmentsDebug(8)(3) <= not(phi4);
-
-	ledSegmentsDebug(8)(6) <= we;
+	io_6530_002_porta_in <= x"0f";
 	
 	phi4_debug <= phi4;
 	
