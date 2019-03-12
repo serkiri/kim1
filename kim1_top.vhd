@@ -69,7 +69,7 @@ architecture behavior of kim1_top is
 	constant SEG_GAP		: integer := 20;
 	
 	constant AFTER_BURN_CYCLES		: integer := 8000;
-	constant CLOCK_DEVIDER			: integer := 5000000*2;
+	constant CLOCK_DEVIDER			: integer := 1;
 	
 	
 	signal we				: std_logic;
@@ -95,11 +95,11 @@ architecture behavior of kim1_top is
 	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
 	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"00";
 
 begin
 	pllInst : entity work.pll
@@ -111,6 +111,7 @@ begin
 	mem_decoder_inst : entity work.mem_decoder
 		port map(
 			addr 				=> address_out,
+			mem_clock		=> mem_clock,
 			ram_1024_en 	=> ram_1024_en,
 			io_6530_003_en => io_6530_003_en,
 			io_6530_002_en => io_6530_002_en,
@@ -253,14 +254,14 @@ begin
 			if (signalCount >= 2) then
 					rst <= '0';
 			end if;
-			if (signalCount >= 10000000) and (signalCount < 10000000 + 300000)then
-				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
-				--	io_6530_002_porta_in(1) <= '1'; 
+			if (signalCount >= 55) and (signalCount < 95)then
+--				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
+					io_6530_002_portb_in(7) <= '1'; 
 					ledSegmentsDebug(8)(1) <= '1';
 				else
-				--	io_6530_002_porta_in(1) <= '0';
+					io_6530_002_portb_in(7) <= '0';
 					ledSegmentsDebug(8)(1) <= '0';					
-				end if;
+--				end if;
 			end if;
 			signalCount <= signalCount + 1;
 		end if;
@@ -416,7 +417,16 @@ begin
 		ram_6530_en_debug		<= ram_6530_en;
 		rom_en_debug			<= rom_en;
 		mem_clock_debug		<= mem_clock;
-		io_6530_002_porta_out_debug <= io_6530_002_porta_out(0);
+		io_6530_002_porta_out_debug <= io_6530_002_portb_in(7);
+		
+		io_6530_002_portb_in(0) <= io_6530_002_porta_out(7); 
+		io_6530_002_portb_in(1) <= io_6530_002_porta_out(6); 
+		io_6530_002_portb_in(2) <= io_6530_002_porta_out(5); 
+		io_6530_002_portb_in(3) <= io_6530_002_porta_out(4); 
+		io_6530_002_portb_in(4) <= io_6530_002_porta_out(3); 
+		io_6530_002_portb_in(5) <= io_6530_002_porta_out(2); 
+		io_6530_002_portb_in(6) <= io_6530_002_porta_out(1); 
+--		io_6530_002_portb_in(7) <= io_6530_002_porta_out(0); 
 	
 	
 end behavior;
