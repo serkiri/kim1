@@ -51,7 +51,7 @@ architecture behavior of kim1_top is
 	constant SEG_GAP		: integer := 20;
 	
 	constant AFTER_BURN_CYCLES		: integer := 8000;
-	constant CLOCK_DEVIDER			: integer := 5000000*2;
+	constant CLOCK_DEVIDER			: integer := 5*1000000;
 	
 	
 	signal we				: std_logic;
@@ -237,13 +237,14 @@ begin
 					rst <= '0';
 			end if;
 			if (signalCount >= 10000000) and (signalCount < 10000000 + 300000)then
+				ledSegmentsDebug(8)(1) <= '1';
 				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
-				--	io_6530_002_porta_in(1) <= '1'; 
-					ledSegmentsDebug(8)(1) <= '1';
+					io_6530_002_porta_in(1) <= '1'; 
 				else
-				--	io_6530_002_porta_in(1) <= '0';
-					ledSegmentsDebug(8)(1) <= '0';					
+					io_6530_002_porta_in(1) <= '0';
 				end if;
+			else
+				ledSegmentsDebug(8)(1) <= '0';								
 			end if;
 			signalCount <= signalCount + 1;
 		end if;
@@ -375,13 +376,13 @@ begin
 
 	ledValueDebug(31 downto 16) <= address_out(15 downto 0);
 	ledValueDebug(15 downto 8) <= data_in(7 downto 0);
---	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
+	ledValueDebug(7 downto 0) <= data_out(7 downto 0);
 	
-	ledValueDebug(7 downto 0) <= io_6530_002_portb_out;
+--	ledValueDebug(7 downto 0) <= io_6530_002_portb_out;
 	
 --	ledSegmentsDebug(8)(0) <= not(io_6530_002_porta_in(1));
 
-	io_6530_002_porta_in <= x"0f";
+--	io_6530_002_porta_in <= x"0f";
 	
 end behavior;
 	
