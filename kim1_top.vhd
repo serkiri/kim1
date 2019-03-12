@@ -77,11 +77,11 @@ architecture behavior of kim1_top is
 	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
 	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"00";
 	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"ff";
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"00";
 
 begin
 	pllInst : entity work.pll
@@ -93,6 +93,7 @@ begin
 	mem_decoder_inst : entity work.mem_decoder
 		port map(
 			addr 				=> address_out,
+			mem_clock		=> mem_clock,
 			ram_1024_en 	=> ram_1024_en,
 			io_6530_003_en => io_6530_003_en,
 			io_6530_002_en => io_6530_002_en,
