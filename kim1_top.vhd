@@ -75,13 +75,13 @@ architecture behavior of kim1_top is
 	signal rom_en			: std_logic;
 	
 	signal io_6530_002_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"00";
+	signal io_6530_002_porta_in	: std_logic_vector(7 downto 0) := x"ff";
 	signal io_6530_002_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"00";
+	signal io_6530_002_portb_in	: std_logic_vector(7 downto 0) := x"ff";
 	signal io_6530_003_porta_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"00";
+	signal io_6530_003_porta_in	: std_logic_vector(7 downto 0) := x"ff";
 	signal io_6530_003_portb_out	: std_logic_vector(7 downto 0);
-	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"00";
+	signal io_6530_003_portb_in	: std_logic_vector(7 downto 0) := x"ff";
 
 begin
 	pllInst : entity work.pll
