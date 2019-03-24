@@ -50,8 +50,8 @@ architecture behavior of kim1_top is
 	constant SEG_THICK	: integer := 10;
 	constant SEG_GAP		: integer := 20;
 	
-	constant AFTER_BURN_CYCLES		: integer := 8000;
-	constant CLOCK_DEVIDER			: integer := 5*1000000;
+	constant AFTER_BURN_CYCLES		: integer := 6000;--8863-м 8864-8
+	constant CLOCK_DEVIDER			: integer := 4;
 	
 	
 	signal we				: std_logic;
@@ -236,12 +236,30 @@ begin
 			if (signalCount >= 2) then
 					rst <= '0';
 			end if;
-			if (signalCount >= 10000000) and (signalCount < 10000000 + 300000)then
-				ledSegmentsDebug(8)(1) <= '1';
-				if (io_6530_002_portb_out(4 downto 1) = "0000") then --"0010"
-					io_6530_002_porta_in(1) <= '1'; 
+			if (signalCount >= 10000000) then
+				if (signalCount < 10000000 + 1000000)then --GO
+					ledSegmentsDebug(8)(1) <= '1';
+					if (io_6530_002_portb_out(4 downto 1) = "0010") then 
+						io_6530_002_porta_in(1) <= '0'; 
+					else
+						io_6530_002_porta_in(1) <= '1';
+					end if;
+				elsif (signalCount >= 15000000) and (signalCount < 15000000 + 1000000)then --1
+					ledSegmentsDebug(8)(1) <= '1';
+					if (io_6530_002_portb_out(4 downto 1) = "0000") then 
+						io_6530_002_porta_in(5) <= '0'; 
+					else
+						io_6530_002_porta_in(5) <= '1';
+					end if;
+				elsif (signalCount >= 615000000) and (signalCount < 615000000 + 1000000)then --0
+					ledSegmentsDebug(8)(1) <= '1';
+					if (io_6530_002_portb_out(4 downto 1) = "0000") then 
+						io_6530_002_porta_in(6) <= '0'; 
+					else
+						io_6530_002_porta_in(6) <= '1';
+					end if;
 				else
-					io_6530_002_porta_in(1) <= '0';
+					ledSegmentsDebug(8)(1) <= '0';
 				end if;
 			else
 				ledSegmentsDebug(8)(1) <= '0';								
@@ -272,9 +290,9 @@ begin
 		if(phi2'event and phi2 = '1')then
 			for i in 0 to 5 loop	
 				if (to_integer(unsigned(io_6530_002_portb_out(4 downto 1))) = 4 + i) then
+					ledSegmentsAfterBurn(i) <= ledSegmentsAfterBurn(i) or io_6530_002_porta_out(6 downto 0);
 					ledDelays(i) <= 0;
 					ledSegments(i) <= ledSegmentsAfterBurn(i);
-					ledSegmentsAfterBurn(i) <= ledSegmentsAfterBurn(i) or io_6530_002_porta_out(6 downto 0);
 				else
 					if (ledDelays(i) = AFTER_BURN_CYCLES) then
 						ledSegments(i) <= "0000000";
