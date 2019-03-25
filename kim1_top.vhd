@@ -50,7 +50,7 @@ architecture behavior of kim1_top is
 	constant SEG_THICK	: integer := 10;
 	constant SEG_GAP		: integer := 20;
 	
-	constant AFTER_BURN_CYCLES		: integer := 6000;--8863-м 8864-8
+	constant AFTER_BURN_CYCLES		: integer := 10000;
 	constant CLOCK_DEVIDER			: integer := 4;
 	
 	
@@ -251,7 +251,7 @@ begin
 					else
 						io_6530_002_porta_in(5) <= '1';
 					end if;
-				elsif (signalCount >= 615000000) and (signalCount < 615000000 + 1000000)then --0
+				elsif (signalCount >= 3015000000) and (signalCount < 3015000000 + 1000000)then --0
 					ledSegmentsDebug(8)(1) <= '1';
 					if (io_6530_002_portb_out(4 downto 1) = "0000") then 
 						io_6530_002_porta_in(6) <= '0'; 
@@ -290,7 +290,11 @@ begin
 		if(phi2'event and phi2 = '1')then
 			for i in 0 to 5 loop	
 				if (to_integer(unsigned(io_6530_002_portb_out(4 downto 1))) = 4 + i) then
-					ledSegmentsAfterBurn(i) <= ledSegmentsAfterBurn(i) or io_6530_002_porta_out(6 downto 0);
+					if (ledDelays(i) /= 0) then
+						ledSegmentsAfterBurn(i) <= "0000000";
+					else
+						ledSegmentsAfterBurn(i) <= ledSegmentsAfterBurn(i) or io_6530_002_porta_out(6 downto 0);
+					end if;
 					ledDelays(i) <= 0;
 					ledSegments(i) <= ledSegmentsAfterBurn(i);
 				else
