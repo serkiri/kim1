@@ -73,8 +73,9 @@ begin
     
     -- Multiplexer connected to the BI register input
     MUX_BI: BI_d <= DB when uins.mux_bi = "00" else 
-                    not DB when uins.mux_bi = "01" else
-                    SB;
+                    not DB when uins.mux_bi = "01" and P_q(DECIMAL) = '0' else
+                    std_logic_vector(9 - unsigned(DB(7 downto 4))) & std_logic_vector(9 - unsigned(DB(3 downto 0))) when uins.mux_bi = "01" and P_q(DECIMAL) = '1' else
+                   SB;
     
     ALU: entity work.ALU 
         port map (
@@ -84,7 +85,8 @@ begin
             operation   => uins.ALUoperation,
             c           => carryFlag,
             v           => overflowFlag,
-            carry_in    => ALUcarry_in
+            carry_in    => ALUcarry_in,
+            d           => P_q(DECIMAL)
         );
         
     -- Multiplexer connected to the ALU carry input

@@ -19,16 +19,35 @@ entity ALU is
         result      : out std_logic_vector(7 downto 0);     -- Operation result
         c           : out std_logic;                        -- Carry flag
         v           : out std_logic;                        -- Overflow flag
-        operation   : in ALU_Operation_type     
+        operation   : in ALU_Operation_type;
+        d           : in std_logic                          -- BCD flag
     );
 end ALU;
 
 architecture behavioral of ALU is
     -- Signal used to read the result bits (Can't read directly output ports)
     signal temp: std_logic_vector(7 downto 0);
-    signal sum_ext, a_ext, b_ext: unsigned(9 downto 0);
+    signal sum_ext, a_ext, b_ext, bcd_result: unsigned(9 downto 0);
+    signal bcd_half_carry : std_logic;
      
 begin  
+    bcd_adder_lo: entity work.BCDAdder 
+        port map (
+				a => a_ext(4 downto 1),
+				b => b_ext(4 downto 1),
+				c_in => b_ext(0),
+				s => bcd_result(4 downto 1),
+				c_out => bcd_half_carry
+        );
+    bcd_adder_high: entity work.BCDAdder 
+        port map (
+				a => a_ext(8 downto 5),
+				b => b_ext(8 downto 5),
+				c_in => bcd_half_carry,
+				s => bcd_result(8 downto 5),
+				c_out => bcd_result(9)
+        );
+		  
     result <= temp;
     
     temp <= a and b                  when operation = ALU_AND else
@@ -46,7 +65,10 @@ begin
     b_ext <= UNSIGNED('0' & b & carry_in) when operation = ALU_ADC or operation = ALU_DECHC else UNSIGNED('0' & b & '0');
     
     -- Sum and carry generation
-    sum_ext <= (a_ext + b_ext) when (operation = ALU_ADC or operation = ALU_ADD) else (a_ext + b_ext - 2) when (operation = ALU_DEC or operation = ALU_DECHC) else "0000000000";
+    sum_ext <= (a_ext + b_ext) when ((operation = ALU_ADC or operation = ALU_ADD) and d = '0')
+	 else bcd_result when ((operation = ALU_ADC or operation = ALU_ADD) and d = '1')
+	 else (a_ext + b_ext - 2) when (operation = ALU_DEC or operation = ALU_DECHC) 
+	 else "0000000000";
        
     -- Overflow flag (Operands with the same signal but different from the result's signal)
     v <= '1' when a(7) = b(7) and a(7) /= temp(7) else '1' when (b(6) = '1' and operation = ALU_B) else '0';     -- Behavioral

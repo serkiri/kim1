@@ -79,6 +79,8 @@ set_location_assignment PIN_165 -to VIDEO_R[5]
 set_location_assignment PIN_168 -to VIDEO_R[6]
 set_location_assignment PIN_169 -to VIDEO_R[7]
 set_location_assignment PIN_132 -to CLK_20
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+set_global_assignment -name VHDL_FILE P6502/BCDAdder.vhd
 set_global_assignment -name VHDL_FILE 6530.vhd
 set_global_assignment -name VHDL_FILE P6502/RegisterNbits.vhd
 set_global_assignment -name VHDL_FILE P6502/P6502_pkg.vhd
